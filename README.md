@@ -1,9 +1,9 @@
 # Presidential Campaign Email Data Wrangling and Analysis
 "working code executed now is better than perfect code executed next week"
-Are you curious about the rhetoric used in political emails? Political emails are an intimate window into the language used to influence supporters, and the data is easily gathered.
-This project takes emails of various formats and prepares them for natural language processing.
 
-All the data used here was collected by signing up for campaign emails on each political candidates' official campaign page.
+Are you curious about the rhetoric used in political emails? Political emails are easily gathered and are an intimate window into the language used to influence supporters that candidates are confident are already on their side.
+
+This project takes emails of various formats and prepares them for natural language processing. All the data used here was collected by signing up for campaign emails on each political candidates' official campaign page.
 
 I get google takeout to give me a .mbox file of all the messages in a given label. I have a gmail that is subscribed to a bunch of political email accounts, and the takeout function from google makes it very easy to download messages in a given label as a .mbox.
 
