@@ -1,6 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+First Version began March 30, 2019
+
+@author: testBro1745
+
+go use the sampleEmailParser.py file or read the readme in the github 
+https://github.com/TestBro1745/doingTheData
+
+"""
+
 import mailbox
 import re
 import pickle
+import json
 from bs4 import BeautifulSoup
 
 class emailMboxParser:
@@ -13,25 +25,37 @@ class emailMboxParser:
         #regexTouples is a list of (0,1) touples where [0] is a compiled 
         #re.Pattern object (regex pattern) and [1] is what to sub it with.
         self.regexTouples = []
+        #headerTouples is a list of (0,1,2) touples. [0] is what header you are searching in
+        #[1] is what you're searching for in that header.  [2] is what you want the 
+        #dictionary's key name to be. This enables multiple things from the same header to be 
+        #recorded with different keys
+        self.headerTouples = []
+        self.encode = 'ascii'
     
     def declareDefaultRegex(self):
         # create the regex for hyperlinks
-        self.regexTouples.append((re.compile(r'http://\S+', re.IGNORECASE),'++HYPERLINK++'))
+        self.regexTouples.append((re.compile(r'https?://\S+', re.IGNORECASE),' ++HYPERLINK++ '))
         # regex for quotes and apostrophes &rsquo; &ldquo; &rdquo;
         self.regexTouples.append((re.compile(r'\&\w{5};'),"'"))
         # for tabs
         self.regexTouples.append((re.compile(r'\t'),'  '))
+        # for too many spaces
+        self.regexTouples.append((re.compile(r'\s\s\s*'),' '))     
         # for arrows
         self.regexTouples.append((re.compile(r'\&\w{4};'),'--'))
         # for all other &... html characters
         self.regexTouples.append((re.compile(r'\&\S{3,6};'),''))
         # for all blocks of whitespace 2+lines with any number of spaces between
         self.regexTouples.append((re.compile(r'(\n+\s+\n)+'),'\n'))
-        
+    
+    def AddHeaderTouple(self,header,findValue=None,keyValue=None):
+        if type(header) != str or (findValue != None and type(findValue) != str) or (keyValue != None and type(keyValue) != str):
+            print('header must be string. Other 2 arguments are optional-- None or string')
+        else: self.headerTouples.append((header,findValue,keyValue))
+    
     def AddRegexTouple(self,regexPattern,replaceWith=' '):    
         if type(regexPattern) == re.Pattern and type(replaceWith) == str:
-            regexTouple = (regexPattern,replaceWith)
-            self.regexTouples.append(regexTouple)
+            self.regexTouples.append((regexPattern,replaceWith))
         else: print('''requires at least 1 argument (re.Pattern object), 
                     and the second if provided must be a string''')
         
@@ -51,8 +75,31 @@ class emailMboxParser:
         'Body' : bodyExtract
         }
         
+        if len(self.headerTouples) == 0: return MsgDict
+        additionalItems = self.FindAdditionalItems(message)
+        for item in additionalItems:
+            MsgDict.update({item[0] : item[1]})
         return MsgDict
     
+    def FindAdditionalItems(self,message):
+        additionalItems = []
+        for header in self.headerTouples:
+            try: headerPayload = message[header[0]]
+            except:
+                print('header {} not present'.format(header[0]))
+                continue
+            if not header[1] and not header[2]: #key:mbox header, value: mbox value
+                additionalItems.append((header[0],headerPayload))
+                break
+            else:
+                #if findValue not found, break and move on
+                if not header[1] in headerPayload: continue
+                #if findValue is found but no dictvalue give, key: mbox header, value: findValue
+                elif not header[2]: additionalItems.append((header[0],header[1]))
+                #if findValue found and dictvalue given, key: keyValue, value: findValue
+                else: additionalItems.append((header[2],header[1]))
+        return additionalItems
+            
     def ParseMsgToTxt(self,message):    
         printString = ''
         printString += ('**'*20 + '\n')
@@ -74,6 +121,7 @@ class emailMboxParser:
             TotalPayload += str(payloadParts[0])
         else:
             payloadString = message.get_payload()
+            #payloadString = BeautifulSoup(payloadString,features="html.parser").text
             payloadString = BeautifulSoup(payloadString,features="html.parser").text
             TotalPayload += payloadString.split('{ display: none !important; }')[2]
         return(TotalPayload)
@@ -98,7 +146,7 @@ class emailMboxParser:
         #removeReplaceScrub first to keep from regexing email addresses
         payloadString = self.removeReplaceScrub(payloadString,simple)
         payloadString = self.regexReplaceScrub(payloadString,simple)
-        return(bytes(payloadString,'ascii','ignore').decode('ascii','ignore'))
+        return(bytes(payloadString,self.encode,'ignore').decode(self.encode,'ignore'))
     
     def parseToText(self,outputFilename='mboxTxtOutput',outputFolder='obj/',simple=True):
         # create an output file in write mode
@@ -113,17 +161,21 @@ class emailMboxParser:
     
     def parseToDict(self,simple=True):
         #Input is an mBox file, output is a list of dictionaries.
-        MsgCount = 0
+        #MsgCount = 0
         AllMessages = []
         for message in self.mBox:
-            MsgCount += 1
+            #MsgCount += 1
             MsgDict = self.ParseMsgToDict(message,simple)
             AllMessages.append(MsgDict)
         return AllMessages
     
-    def objToPickle(self,inputDict,outputFilename='mboxPickleOutput',outputFolder='obj/'):         
+    def objToPickle(self,inputObj,outputFilename,outputFolder='obj/'):         
         with open(outputFolder + outputFilename + '.pkl', 'wb+') as f:
-            pickle.dump(inputDict, f)
+            pickle.dump(inputObj, f)
+            
+    def objToJson(self,inputObj,outputFilename,outputFolder='obj/'):         
+        with open(outputFolder + outputFilename + '.json', 'w') as f:
+            json.dump(inputObj, f, sort_keys=False, indent=4)
     
     def parseToPickle(self,outputFilename='mboxPickleOutput',outputFolder='obj/',simple=False):
         self.objToPickle(self.parseToDict(simple),outputFilename,outputFolder)
@@ -131,28 +183,10 @@ class emailMboxParser:
     def loadObjFromPickle(self,pickleFile='mboxPickleOutput',inputFolder='obj/'):
         with open(inputFolder + pickleFile + '.pkl', 'rb') as f:
             return pickle.load(f)
+    
+    def parseToJson(self,outputFilename='mboxJSONOutput',outputFolder='obj/',simple=False):
+        self.objToJson(self.parseToDict(simple),outputFilename,outputFolder)
 
 if __name__ == "__main__":
-    
-    RECIPIENT_EMAIL = 'hellothere@gmail.com'
-    RECIPIENT_EMAIL_CAPS = 'HELLOTHERE@GMAIL.COM'
-
-    RECIPIENT_FIRNAME1 = '\nChuck'
-    RECIPIENT_FIRNAME2 = ' Chuck '
-    RECIPIENT_FIRNAME3 = ' Chuck,'
-    RECIPIENT_FULLNAME = '\n Chuck Yeager'
-    
-    mBox = mailbox.mbox('mailbox.mbox')
-    newParser = emailMboxParser(mBox)
-    #newParser.AddReplacementTouple(RECIPIENT_EMAIL,'++RECIPIENT_EMAIL++')
-    #newParser.AddReplacementTouple(RECIPIENT_EMAIL_CAPS,'++RECIPIENT_EMAIL++')
-    newParser.AddReplacementTouple(RECIPIENT_FIRNAME1,'++RECIPIENT_FIRNAME++')
-    newParser.AddReplacementTouple(RECIPIENT_FIRNAME2,'++RECIPIENT_FIRNAME++')
-    newParser.AddReplacementTouple(RECIPIENT_FIRNAME3,'++RECIPIENT_FIRNAME++')
-    newParser.AddReplacementTouple(RECIPIENT_FULLNAME,'++RECIPIENT_FULLNAME++')
-    newParser.declareDefaultRegex()
-    
-    newParser.parseToPickle('EmailOutput',simple=False)
-    newParser.parseToText('EmailOutput',simple=False)
-    
-    
+    pass
+#go use the sampleEmailParser.py file. 
