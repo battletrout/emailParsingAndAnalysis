@@ -15,7 +15,7 @@ Python 3.7 is the language of the day.
 - topGOPCampaignEmailOutput.json (and .pkl): a collection of 300+ political emails from a GOP candidate extracted and smoothed.
 
 # emailParseAndScrub.py
-mboxEmailParseAndScrub.py: imports mailbox, re, pickle, and BeautifulSoup from BS4
+mboxEmailParseAndScrub.py: uses mailbox, re, pickle, json, and BeautifulSoup from BS4
 - **Assumes there is a /obj folder in the cwd. This is default output file location**
 - defines class emailMboxParser. emailMboxParser takes a .mbox file as an input and outputs .txt, .json, or .pkl. 
 - Touples of compiled regex's and what to replace the regex with when found (re.Pattern,str) can be added to the list regexTouples internal to an emailMboxParser, as well as replaceTouples (str,str) which will just be removed and replaced at runtime.
