@@ -1,7 +1,7 @@
-# Presidential Campaign Email Data Wrangling and Analysis
+# Campaign Supporter Email Data Wrangling and Analysis
 "working code executed now is better than perfect code executed next week"
 
-Are you curious about the rhetoric used in political emails? Political emails are easily gathered and are an intimate window into the language used to influence supporters that candidates are confident are already on their side.
+Are you curious about the rhetoric used in political emails to supporters? Political emails are easily gathered and are an intimate window into the language used to influence supporters that candidates are confident are already on their side.
 
 This project takes emails of various formats and prepares them for natural language processing. All the data used here was collected by signing up for campaign emails on each political candidates' official campaign page.
 
@@ -12,7 +12,7 @@ Python 3.7 is the language of the day.
 # obj/
 - ConsolidatedPoliticalEmails.mbox: .mbox with emails from the 3 democratic candidates who were topping the polls on the day I pulled the data from my campaign email collection email address.
 - top3DemMboxOutput.json: output from running sampleEmailParser.py on ConsolidatedPoliticalEmails.mbox. It is plaintext extracted and smoothed from the emails and is ready for processing in NLTK.
-- topGOPCampaignEmailOutput.json (and .pkl): a collection of 300+ political emails from a GOP candidate extracted and smoothed.
+- topGOPCampaignEmailOutput.json: a collection of 300+ political emails from a GOP candidate extracted and smoothed. I removed the email ending disclaimers ("Paid for by xyz, sent to recipientEmail, etc") using regex so as not to skew analysis of frequency, etc.
 
 # emailParseAndScrub.py
 mboxEmailParseAndScrub.py: uses mailbox, re, pickle, json, and BeautifulSoup from BS4
