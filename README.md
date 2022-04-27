@@ -1,5 +1,5 @@
 # Campaign Supporter Email Data Wrangling and Analysis
-"working code executed now is better than perfect code executed next week"
+Note that links are to my previous github account name, TestBro1745.  Just replace TestBro 1745 with battletrout for any hyperlinks.
 
 Are you curious about the rhetoric used in political emails to supporters? Political emails are easily gathered and are an intimate window into the language used to influence supporters that candidates are confident are already on their side.
 
